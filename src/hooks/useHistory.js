@@ -1,7 +1,8 @@
 import { useState, useCallback, useMemo } from "react";
 import { createSampleRecords } from "../data/sampleData";
 
-// Flip to `true` to mix in the demo data (for screenshots); `false` = real data only.
+// Demo mode: `true` shows the sample data only (for screenshots) and does NOT touch
+// your saved data; `false` = your real data only. Flip back to `false` when done.
 const USE_SAMPLE_DATA = false;
 
 const STORAGE_KEY = "blank_records";
@@ -32,7 +33,7 @@ export function useHistory() {
   const addRecord = useCallback((r) => {
     setUserRecords(prev => {
       const next = [...prev, { ...r, id: Date.now(), date: new Date() }];
-      persist(next);
+      if(!USE_SAMPLE_DATA) persist(next); // don't write real storage while demoing
       return next;
     });
   }, []);
@@ -40,12 +41,16 @@ export function useHistory() {
   const importRecords = useCallback((recs) => {
     setUserRecords(prev => {
       const next = [...prev, ...recs];
-      persist(next);
+      if(!USE_SAMPLE_DATA) persist(next);
       return next;
     });
   }, []);
 
-  const records = useMemo(() => [...sampleRecords, ...userRecords], [sampleRecords, userRecords]);
+  // Demo mode shows sample data only; otherwise real (saved) data only.
+  const records = useMemo(
+    () => USE_SAMPLE_DATA ? sampleRecords : userRecords,
+    [sampleRecords, userRecords]
+  );
 
   return { records, addRecord, importRecords };
 }
