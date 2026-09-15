@@ -163,6 +163,18 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
 
                 <button onClick={exportCSV}
                   style={{marginTop:8,padding:"8px 0",width:"90%",borderRadius:8,background:"transparent",border:"1.5px solid #d8d0c4",color:"#8a8078",fontSize:12,fontFamily:F,cursor:"pointer"}}>💾 导出 Blank 数据</button>
+
+                <button onClick={()=>{
+                  if(confirm("恢复默认标签、名字和头像？专注记录不受影响")){
+                    localStorage.removeItem('blank_tags');
+                    localStorage.removeItem('blank_userName');
+                    localStorage.removeItem('blank_userAvatar');
+                    window.location.reload();
+                  }
+                }}
+                  style={{marginTop:12,padding:"8px 0",width:"90%",borderRadius:8,background:"transparent",border:"1px solid #e8e0d6",color:"#b0a898",fontSize:11,fontFamily:F,cursor:"pointer"}}>
+                  🔄 恢复默认设置
+                </button>
               </PixelCloud>
             </div>
           </div>
