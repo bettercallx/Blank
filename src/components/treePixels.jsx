@@ -11,7 +11,8 @@ export function treePixels(treeId, stage, px) {
   for(let x=0;x<16;x++) P(x,15,x%2===0?"#c4a882":"#b89e76");
 
   if(treeId==="bamboo"){
-    const dark="#3a7d3a", mid="#5aad50", light="#7bc26e", node="#4d8844";
+    // stalk shades from TC.bamboo.l; the joint/node color lives in the trunk slot
+    const dark=c.l[0], mid=c.l[1], light=c.l[2], node=c.trunk;
     if(stage===0){
       P(7,14,mid);P(8,14,mid);P(7,13,light);P(8,13,dark);
     } else if(stage===1){
@@ -253,8 +254,8 @@ export function treePixels(treeId, stage, px) {
       P(9,10,"#ffffff");P(10,10,"#1a1a1a");
     }
   } else if(treeId==="plum"){
-    const bark="#5a3a28", branch="#7a5040";
-    const f1="#e05070", f2="#f0a0b8", f3="#c83050";
+    const bark=c.trunk, branch=c.branch;    // TC.plum.trunk / .branch drive the two wood tones
+    const f1=c.l[0], f2=c.l[1], f3=c.l[2];  // TC.plum.l drives the three blossom shades
     if(stage===0){
       P(7,14,bark);P(8,14,bark);P(7,13,branch);P(8,13,f2);
     } else if(stage===1){

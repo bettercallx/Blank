@@ -11,19 +11,14 @@ const TREE_MAP = {
   "向日葵":"sunflower","郁金香":"sunflower","天竺葵":"sunflower","薰衣草":"sunflower","熊童子":"sunflower",
 };
 
-const TAG_MAP = {
-  "未设置":"uncategorized","blank":"uncategorized",
-  "systems":"study","algorithms":"study","deeplearning":"study","distributed system":"study",
-  "leetcode":"code","C++":"code",
-  "reading":"read",
-  "ai":"create","agent":"create",
-  "DB":"study","找工作":"work","game":"uncategorized",
-};
+// Forest's own "no tag" values → our protected blank tag; everything else is kept
+// verbatim as its original Forest label (the importer creates a tag per name).
+const UNSET_TAGS = new Set(["", "未设置", "blank", "未分类"]);
 
 export function parseForestCSV(text) {
   const lines = text.split("\n").slice(1);
   const records = [];
-  const newTags = new Set();
+  const tagNames = new Set(); // distinct original Forest tag names to create
 
   lines.forEach((line, i) => {
     if (!line.trim()) return;
@@ -36,12 +31,15 @@ export function parseForestCSV(text) {
     if (isNaN(start) || isNaN(end)) return;
     const dur = Math.floor((end - start) / 60000);
     if (dur <= 0) return;
-    const mappedTree = TREE_MAP[treeType] || "pine";
-    const mappedTag = TAG_MAP[tag] || tag.toLowerCase().replace(/\s+/g, "_") || "uncategorized";
-    if (!TAG_MAP[tag] && tag !== "未设置" && tag !== "blank") newTags.add(tag);
+    // any Forest tree we haven't mapped yet falls back to 大喷菇 (fumeshroom) so it stands out
+    const mappedTree = TREE_MAP[treeType] || "fumeshroom";
+    const rawTag = (tag || "").trim();
+    // tagName is the original Forest label, or null for "no tag" → resolved to blank by the importer
+    const tagName = UNSET_TAGS.has(rawTag) ? null : rawTag;
+    if (tagName) tagNames.add(tagName);
     records.push({
       id: 100000 + i,
-      tag: mappedTag,
+      tagName,
       tree: mappedTree,
       duration: dur,
       date: start,
@@ -49,5 +47,5 @@ export function parseForestCSV(text) {
     });
   });
 
-  return { records, newTags: [...newTags] };
+  return { records, tagNames: [...tagNames] };
 }

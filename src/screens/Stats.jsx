@@ -4,6 +4,7 @@ import { F, W } from "../styles";
 import PixelCloud from "../components/PixelCloud";
 import { treePixels } from "../components/treePixels";
 import { parseForestCSV } from "../utils/importCSV";
+import { fmtDuration, fmtDurationShort } from "../utils/format";
 
 export default function Stats({ records, tags, setTags, importRecords, userName, setUserName, userAvatar, setUserAvatar, onBack }) {
   const [showSettings,setShowSettings] = useState(false);
@@ -24,15 +25,30 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
     if(!file) return;
     const reader = new FileReader();
     reader.onload = (ev) => {
-      const { records: imported, newTags } = parseForestCSV(ev.target.result);
-      newTags.forEach(t => {
-        const tid = t.toLowerCase().replace(/\s+/g,"_");
-        if(!tags.find(x=>x.id===tid)) {
-          setTags(prev=>[...prev,{id:tid,label:t,icon:"🏷️"}]);
-        }
+      const { records: imported, tagNames } = parseForestCSV(ev.target.result);
+
+      // Resolve each Forest tag name to a tag id: reuse an existing tag with the
+      // same label (merge), otherwise create a new one. Unset tags → blank.
+      const idByLabel = new Map(tags.map(t => [t.label, t.id]));
+      const usedIds = new Set(tags.map(t => t.id));
+      const additions = [];
+      tagNames.forEach(name => {
+        if(idByLabel.has(name)) return;            // same-named tag already exists → merge
+        let id = name.toLowerCase().replace(/\s+/g,"_") || `tag_${additions.length}`;
+        while(usedIds.has(id)) id = `${id}_`;       // avoid colliding with a different tag's id
+        usedIds.add(id);
+        idByLabel.set(name, id);
+        additions.push({ id, label: name });
       });
-      importRecords(imported);
-      alert(`导入成功！${imported.length} 条记录`);
+
+      const resolved = imported.map(({ tagName, ...r }) => ({
+        ...r,
+        tag: tagName ? idByLabel.get(tagName) : "uncategorized",
+      }));
+
+      if(additions.length) setTags(prev => [...prev, ...additions]);
+      importRecords(resolved);
+      alert(`导入成功！${resolved.length} 条记录，${additions.length} 个新标签`);
     };
     reader.readAsText(file);
     e.target.value = "";
@@ -105,6 +121,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
                 {treePixels(userAvatar, 3, 3)}
               </svg>
               <span style={{fontSize:12,color:"#8a8078",fontFamily:F}}>{userName||"guest"}</span>
+              <span style={{fontSize:9,color:"#c4baa8",fontFamily:F}}>setting</span>
             </button>
           </div>
         </div>
@@ -236,11 +253,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
             trendMin = totalMin - prevMin;
           }
 
-          const fmtTrend = (m) => {
-            const abs = Math.abs(m);
-            if(abs>=60) return `${Math.floor(abs/60)}小时${abs%60>0?`${abs%60}分钟`:""}`;
-            return `${abs}分钟`;
-          };
+          const fmtTrend = (m) => fmtDuration(Math.abs(m));
           const trendLabel = statsPeriod==="day"?"较昨日":statsPeriod==="week"?"较上周":statsPeriod==="month"?"较上月":"较去年";
 
           // block 2: hourly histogram (day view) or daily bars (week/month/year)
@@ -414,7 +427,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
                       const px = (d/6)*chartW;
                       const py = chartH-(v/dMax)*(chartH-8)-4;
                       const isActive = activeDayPt===d;
-                      const tipText = v>=60?`${Math.floor(v/60)}时${v%60>0?`${v%60}分`:""}`:(`${v}分`);
+                      const tipText = fmtDurationShort(v);
                       return <g key={d}>
                         {isActive && (
                           <g>
@@ -444,7 +457,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
             <div style={W.card}>
               <div style={{display:"flex",justifyContent:"space-between",alignItems:"center"}}>
                 <div style={W.lbl}>专注时间</div>
-                <span style={{fontSize:12,color:"#8a8078",fontFamily:F}}>累计 {totalMin>=60?`${Math.floor(totalMin/60)}小时${totalMin%60>0?`${totalMin%60}分钟`:""}`:(`${totalMin}分钟`)}</span>
+                <span style={{fontSize:12,color:"#8a8078",fontFamily:F}}>累计 {fmtDuration(totalMin)}</span>
               </div>
               {trendMin !== null && (
                 <div style={{display:"flex",alignItems:"center",gap:6,marginTop:4}}>
@@ -466,7 +479,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
                       {activeBar&&activeBar.index===i&&b.value>0&&(
                         <div style={{position:"absolute",bottom:"100%",marginBottom:4,background:"#ffffff",color:"#3a3530",
                           border:"1px solid #e8e0d6",fontSize:10,padding:"2px 8px",borderRadius:6,whiteSpace:"nowrap",zIndex:5,fontFamily:F,pointerEvents:"none"}}>
-                          {b.value>=60?`${Math.floor(b.value/60)}时${b.value%60>0?`${b.value%60}分`:""}`:(`${b.value}分钟`)}
+                          {fmtDurationShort(b.value)}
                         </div>
                       )}
                       <div style={{width:"100%",maxWidth:statsPeriod==="week"?16:undefined,height:Math.max(2,(b.value/barMax)*60),
@@ -526,7 +539,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
                   {(expandDist?tagEntries:tagEntries.slice(0,5)).map(([tid,mins],i)=>{
                     const tag=tags.find(t=>t.id===tid);
                     const pct=totalMin>0?Math.round(mins/totalMin*100):0;
-                    const timeStr = mins>=60?`${Math.floor(mins/60)}时${mins%60>0?`${mins%60}分`:""}`:(`${mins}分`);
+                    const timeStr = fmtDurationShort(mins);
                     const isActive = activePie===tid;
                     return (
                       <div key={tid}

@@ -18,10 +18,8 @@ export const TC = {
   cactus:    { trunk:"#5b8c3e", l:["#4a7c2e","#5b8c3e","#6c9c4e"] },
   palm:      { trunk:"#a0784a", l:["#4a8c2e","#6b9e4a","#8cb06a"] },
   maple:     { trunk:"#7a5230", l:["#c7522a","#e06030","#d44a20"] },
-  bamboo:    { trunk:"#5a9e50", l:["#3a7d3a","#5aad50","#7bc26e"] },
+  bamboo:    { trunk:"#4d8844", l:["#3a7d3a","#5aad50","#7bc26e"] }, // trunk slot = bamboo joint/node color
   sunflower: { trunk:"#6b8c3e", l:["#f7d02c","#e8a817","#c47e10"] },
   fumeshroom:{ trunk:"#c8b0d8", l:["#7b3fa0","#9b5fc0","#b880d8"] },
-  plum:      { trunk:"#5a3a28", l:["#e05070","#f0a0b8","#c83050"] },
+  plum:      { trunk:"#5a3a28", branch:"#7a5040", l:["#e05070","#f0a0b8","#c83050"] }, // branch = lighter twig tone
 };
-
-export const MAX_MIN = 120;

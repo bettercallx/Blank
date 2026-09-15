@@ -3,7 +3,8 @@ import { TREES } from "./data/trees";
 import { DEFAULT_TAGS } from "./data/tags";
 import { useHistory } from "./hooks/useHistory";
 import { useLocalState } from "./hooks/useLocalState";
-import { fmt } from "./utils/format";
+import { fmt, fmtDuration } from "./utils/format";
+import { saveActiveSession, loadActiveSession, clearActiveSession } from "./utils/activeSession";
 import { F, W } from "./styles";
 import PixelCloud from "./components/PixelCloud";
 import { TreeRing } from "./components/TreeRing";
@@ -43,12 +44,15 @@ export default function App() {
       const d=duration*60; setTimeLeft(d); setTotalTime(d); // countdown
     }
     setTreeStage(0); setScreen("focus");
+    // persist the running session so it survives a full page kill
+    saveActiveSession({ startTime: startTimeRef.current, duration, tag: tags[selTag].id, tree: TREES[selTree].id });
   };
 
   // completing a countdown: plant the tree, record, and show the done screen
   const finishFocus = () => {
     if(completedRef.current) return;
     completedRef.current = true;
+    clearActiveSession();
     setTreeStage(3);
     addRecord({tag:tags[selTag].id,tree:TREES[selTree].id,duration,completed:true});
     bumpTag(selTag);
@@ -99,8 +103,42 @@ export default function App() {
     }
   },[timeLeft,totalTime,screen]);
 
+  // Restore a running session left over from a previous page load (e.g. the OS
+  // killed the backgrounded tab). Elapsed time is recomputed from the stored start.
+  useEffect(()=>{
+    const s = loadActiveSession();
+    if(!s) return;
+    const treeIdx = Math.max(0, TREES.findIndex(t=>t.id===s.tree));
+    const tagIdx = tags.findIndex(t=>t.id===s.tag);
+    const safeTagIdx = tagIdx>=0 ? tagIdx : Math.max(0, tags.findIndex(t=>t.id==="uncategorized"));
+    const total = s.duration*60; // 0 for stopwatch
+    const elapsed = Math.floor((Date.now()-s.startTime)/1000);
+
+    startTimeRef.current = s.startTime;
+    setSelTree(treeIdx);
+    setSelTag(safeTagIdx);
+    setDuration(s.duration);
+    setTotalTime(total);
+
+    if(total>0 && elapsed>=total){
+      // countdown already finished while the app was gone → plant & record it now
+      completedRef.current = true;
+      clearActiveSession();
+      setTimeLeft(0);
+      setTreeStage(3);
+      addRecord({tag:s.tag,tree:s.tree,duration:s.duration,completed:true});
+      setScreen("done");
+    } else {
+      // still running → resume where it left off
+      completedRef.current = false;
+      setTimeLeft(total>0 ? total-elapsed : elapsed);
+      setScreen("focus");
+    }
+  },[]); // once on mount
+
   const giveUp = ()=>{
     completedRef.current = true; // stop the timer tick from also finishing
+    clearActiveSession();
     if(totalTime===0) {
       // stopwatch: record elapsed time — but skip empty (0-min) sessions
       const elapsedMin = Math.floor(timeLeft/60);
@@ -134,7 +172,7 @@ export default function App() {
       {/* center area: ring + tree name, vertically centered */}
       <div style={{flex:1,display:"flex",flexDirection:"column",alignItems:"center",justifyContent:"center",minHeight:0}}>
         <div style={{fontSize:15,color:"#b0a898",fontFamily:F,marginBottom:16,letterSpacing:0.5}}>
-          今日已专注 {todayMin>=60?`${Math.floor(todayMin/60)}小时${todayMin%60>0?`${todayMin%60}分钟`:""}`:(`${todayMin}分钟`)}
+          今日已专注 {fmtDuration(todayMin)}
         </div>
         {/* ring with smart gesture: outer edge = dial, center = swipe tree */}
         <div
@@ -239,13 +277,13 @@ export default function App() {
               onChange={e=>setNewTagName(e.target.value)}
               onKeyDown={e=>{
                 if(e.key==="Enter"){
-                  if(newTagName.trim()) setTags(prev=>[...prev,{id:`custom_${Date.now()}`,label:newTagName.trim().slice(0,16),icon:"🏷️"}]);
+                  if(newTagName.trim()) setTags(prev=>[...prev,{id:`custom_${Date.now()}`,label:newTagName.trim().slice(0,16)}]);
                   setNewTagName("");setAddingTag(false);
                 }
                 if(e.key==="Escape"){setNewTagName("");setAddingTag(false);}
               }}
               onBlur={()=>{
-                if(newTagName.trim()) setTags(prev=>[...prev,{id:`custom_${Date.now()}`,label:newTagName.trim().slice(0,16),icon:"🏷️"}]);
+                if(newTagName.trim()) setTags(prev=>[...prev,{id:`custom_${Date.now()}`,label:newTagName.trim().slice(0,16)}]);
                 setNewTagName("");setAddingTag(false);
               }}
               placeholder="新标签" maxLength={16}
