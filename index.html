@@ -10,11 +10,15 @@
     <title>Blank</title>
     <style>
       * { margin: 0; padding: 0; box-sizing: border-box; }
-      body { background: #faf6ee; overflow: hidden; }
+      /* allow vertical page scroll; only clip horizontal overflow */
+      body { background: #faf6ee; overflow-x: hidden; }
     </style>
   </head>
   <body>
     <div id="root"></div>
     <script type="module" src="/src/main.jsx"></script>
+    <!-- Cloudflare Web Analytics -->
+    <script defer src='https://static.cloudflareinsights.com/beacon.min.js' data-cf-beacon='{"token": "ddd13aa3082e43c19b8fced478b9489b"}'></script>
+    <!-- End Cloudflare Web Analytics -->
   </body>
 </html>

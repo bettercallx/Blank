@@ -8,6 +8,7 @@ export const TREES = [
   { id: "maple", name: "枫树", emoji: "🍁" },
   { id: "bamboo", name: "竹子", emoji: "🎋" },
   { id: "sunflower", name: "向日葵", emoji: "🌻" },
+  { id: "plum", name: "梅花", emoji: "🌺" },
 ];
 
 export const TC = {
@@ -20,6 +21,7 @@ export const TC = {
   bamboo:    { trunk:"#5a9e50", l:["#3a7d3a","#5aad50","#7bc26e"] },
   sunflower: { trunk:"#6b8c3e", l:["#f7d02c","#e8a817","#c47e10"] },
   fumeshroom:{ trunk:"#c8b0d8", l:["#7b3fa0","#9b5fc0","#b880d8"] },
+  plum:      { trunk:"#5a3a28", l:["#e05070","#f0a0b8","#c83050"] },
 };
 
 export const MAX_MIN = 120;
