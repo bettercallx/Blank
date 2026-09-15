@@ -2,6 +2,16 @@
 
 a focus app in cute pixel art
 
+React + Vite + SVG pixel art
+
+## Contribution
+
+欢迎提 Issue 和 PR！
+
+- Bug 反馈 → 开 Issue
+- 想要新树种 → 开 Issue 附参考图/提 PR
+- 代码贡献 → Fork → 提 PR
+
 ## local and github pages
 
 ```bash
