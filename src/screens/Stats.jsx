@@ -21,6 +21,11 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
   const [expandDist,setExpandDist] = useState(false);
   const importRef = useRef(null);
 
+  // In demo mode, show a fixed sample identity instead of the real user's — the
+  // real userName/userAvatar are left untouched (settings are disabled in demo).
+  const displayName = demo ? "k" : userName;
+  const displayAvatar = demo ? "fumeshroom" : userAvatar;
+
   const handleImportCSV = (e) => {
     const file = e.target.files?.[0];
     if(!file) return;
@@ -116,7 +121,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
       </div>
       {demo && (
         <div style={{background:"#eef6ef",color:"#4a9e5c",fontSize:12,fontFamily:F,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"7px 12px"}}>
-          <MiniTree treeId={userAvatar} size={15} />示例数据预览 仅供参考,不会保存到你的记录
+          <MiniTree treeId={displayAvatar} size={15} />示例数据预览 仅供参考,不会保存到你的记录
         </div>
       )}
       <div style={{flex:1,padding:"0 20px 32px",overflowY:"auto"}}>
@@ -130,9 +135,9 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
             <button onClick={()=>{ if(demo) return; setShowSettings(true); setSettingsName(userName); }}
               style={{background:"none",border:"none",cursor:demo?"default":"pointer",padding:4,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
               <svg width={48} height={48} viewBox="0 0 48 48" style={{imageRendering:"pixelated"}}>
-                {treePixels(userAvatar, 3, 3)}
+                {treePixels(displayAvatar, 3, 3)}
               </svg>
-              <span style={{fontSize:12,color:"#8a8078",fontFamily:F}}>{userName||"guest"}</span>
+              <span style={{fontSize:12,color:"#8a8078",fontFamily:F}}>{displayName||"guest"}</span>
               {!demo && <span style={{fontSize:9,color:"#c4baa8",fontFamily:F}}>setting</span>}
             </button>
           </div>
@@ -323,7 +328,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
             {/* block 1: forest */}
             <div style={W.card}>
               <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",gap:4}}>
-                <MiniTree treeId={userAvatar} size={16} />
+                <MiniTree treeId={displayAvatar} size={16} />
                 <span style={{fontSize:13,color:"#8a8078",fontFamily:F}}>{treeCount}</span>
               </div>
               <div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:8,maxHeight:52,overflow:"hidden",alignItems:"center"}}
@@ -341,14 +346,14 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
                 <div onClick={e=>e.stopPropagation()}>
                   <PixelCloud width={300}>
                     <div style={{fontSize:14,fontWeight:600,color:"#3a3530",fontFamily:F,marginBottom:4,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
-                      <MiniTree treeId={userAvatar} size={18} />{treeCount}
+                      <MiniTree treeId={displayAvatar} size={18} />{treeCount}
                     </div>
                     <div style={{fontSize:11,color:"#b0a898",fontFamily:F,marginBottom:12}}>
                       {statsPeriod==="day"?"今日":""}
                       {statsPeriod==="week"?"本周":""}
                       {statsPeriod==="month"?"本月":""}
                       {statsPeriod==="year"?"今年":""}
-                      种下的树
+                      种下
                     </div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:4,justifyContent:"center",maxHeight:240,overflowY:"auto"}}>
                       {treeIcons.map((tid,i)=><MiniTree key={i} treeId={tid} size={20} />)}
