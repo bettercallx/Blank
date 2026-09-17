@@ -88,9 +88,12 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
   // How far navigation can reach: back to the oldest record, forward to today.
   // (Derived from real data, so imported history — e.g. back to 2018 — is reachable.)
   const now = new Date();
-  const earliest = records.length ? new Date(Math.min(...records.map(r=>r.date.getTime()))) : now;
   const startOfDay = (d) => { const x=new Date(d); x.setHours(0,0,0,0); return x; };
   const weekStart = (d) => { const x=startOfDay(d); x.setDate(x.getDate()-x.getDay()); return x; };
+  const earliestRec = records.length ? new Date(Math.min(...records.map(r=>r.date.getTime()))) : now;
+  // Always allow navigating back to at least the start of this week — so a brand-new
+  // user isn't stuck on "today" — and further back when older data exists.
+  const earliest = new Date(Math.min(earliestRec.getTime(), weekStart(now).getTime()));
   const atBackLimit =
     statsPeriod==="day"   ? startOfDay(statsDate) <= startOfDay(earliest) :
     statsPeriod==="week"  ? weekStart(statsDate).getTime() <= weekStart(earliest).getTime() :
