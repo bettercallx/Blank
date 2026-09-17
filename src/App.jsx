@@ -31,7 +31,7 @@ export default function App() {
   const [treeStage,setTreeStage] = useState(0);
   const startTimeRef = useRef(null);   // wall-clock start, so the timer survives backgrounding
   const completedRef = useRef(false);  // guards against double-completion (timer tick + resume/give-up race)
-  const {records,addRecord,importRecords} = useHistory();
+  const {records,addRecord,importRecords,demo,setDemo} = useHistory();
 
   const isStopwatch = duration === 0;
   // Cap the open-ended stopwatch so a forgotten session can't record an absurd
@@ -377,5 +377,6 @@ export default function App() {
   // ---- STATS ----
   return <Stats records={records} tags={tags} setTags={setTags} importRecords={importRecords}
     userName={userName} setUserName={setUserName} userAvatar={userAvatar} setUserAvatar={setUserAvatar}
-    onBack={()=>setScreen("home")} />;
+    demo={demo} setDemo={setDemo}
+    onBack={()=>{setDemo(false);setScreen("home");}} />;
 }

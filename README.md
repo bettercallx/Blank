@@ -56,7 +56,8 @@ All user data lives in the browser's `localStorage` (per-device, no server). Key
 | `blank_userName` / `blank_userAvatar` | profile name & avatar tree id |
 | `blank_version` | schema version (managed by migrations) |
 
-Demo/sample data is **never** persisted — toggle it with `USE_SAMPLE_DATA` in `src/hooks/useHistory.js`.
+Demo/sample data is **never** persisted — toggle it in-app via the "看看示例" button on the
+Stats screen (backed by the `demo` state in `src/hooks/useHistory.js`).
 
 ## Migrations
 

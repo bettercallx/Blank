@@ -3,10 +3,11 @@ import { TREES } from "../data/trees";
 import { F, W } from "../styles";
 import PixelCloud from "../components/PixelCloud";
 import { treePixels } from "../components/treePixels";
+import MiniTree from "../components/MiniTree";
 import { parseForestCSV } from "../utils/importCSV";
 import { fmtDuration, fmtDurationShort } from "../utils/format";
 
-export default function Stats({ records, tags, setTags, importRecords, userName, setUserName, userAvatar, setUserAvatar, onBack }) {
+export default function Stats({ records, tags, setTags, importRecords, userName, setUserName, userAvatar, setUserAvatar, demo, setDemo, onBack }) {
   const [showSettings,setShowSettings] = useState(false);
   const [settingsName,setSettingsName] = useState("");
   const [statsPeriod,setStatsPeriod] = useState("day"); // day/week/month/year
@@ -107,9 +108,17 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
 
   return (
     <div style={W.wrap}>
-      <div style={W.top}>
-        <button onClick={onBack} style={{background:"none",border:"none",fontSize:13,color:"#8a8078",cursor:"pointer",fontFamily:F}}>← 返回</button>
+      <div style={{...W.top,display:"flex",justifyContent:demo?"flex-end":"space-between",alignItems:"center"}}>
+        {!demo && <button onClick={onBack} style={{background:"none",border:"none",fontSize:13,color:"#8a8078",cursor:"pointer",fontFamily:F}}>← 返回</button>}
+        <button onClick={()=>setDemo(d=>!d)} style={{background:"none",border:"none",fontSize:13,color:demo?"#b0a898":"#4a9e5c",fontWeight:demo?400:600,cursor:"pointer",fontFamily:F,display:"inline-flex",alignItems:"center",gap:4}}>
+          {demo ? "退出示例 ✕" : <><MiniTree treeId="fumeshroom" size={17} />看看示例 →</>}
+        </button>
       </div>
+      {demo && (
+        <div style={{background:"#eef6ef",color:"#4a9e5c",fontSize:12,fontFamily:F,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"7px 12px"}}>
+          <MiniTree treeId={userAvatar} size={15} />示例数据预览 · 仅供参考,不会保存到你的记录
+        </div>
+      )}
       <div style={{flex:1,padding:"0 20px 32px",overflowY:"auto"}}>
         <div style={{...W.card,marginTop:16}}>
           <div style={{display:"flex",justifyContent:"space-between",alignItems:"flex-start"}}>
@@ -233,11 +242,10 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
           const treeCount = filtered.reduce((s,r)=>s+Math.max(1,Math.ceil(r.duration/60)),0);
 
           // block 1: forest count — each session gives ceil(duration/60) trees
-          const treeEmojis = [];
+          const treeIcons = [];
           filtered.forEach(r=>{
-            const emoji = TREES.find(t=>t.id===r.tree)?.emoji||"🌱";
             const count = Math.max(1,Math.ceil(r.duration/60));
-            for(let j=0;j<count;j++) treeEmojis.push(emoji);
+            for(let j=0;j<count;j++) treeIcons.push(r.tree);
           });
 
           // trend: compare with previous period (only for current period)
@@ -314,14 +322,15 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
           return <>
             {/* block 1: forest */}
             <div style={W.card}>
-              <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center"}}>
-                <span style={{fontSize:13,color:"#8a8078",fontFamily:F}}>🌲 {treeCount}</span>
+              <div style={{display:"flex",justifyContent:"flex-end",alignItems:"center",gap:4}}>
+                <MiniTree treeId={userAvatar} size={16} />
+                <span style={{fontSize:13,color:"#8a8078",fontFamily:F}}>{treeCount}</span>
               </div>
               <div style={{display:"flex",flexWrap:"wrap",gap:3,marginTop:8,maxHeight:52,overflow:"hidden",alignItems:"center"}}
-                onClick={()=>{if(treeEmojis.length>20) setShowForest(true);}}>
-                {treeEmojis.length>0 ? treeEmojis.map((e,i)=><span key={i} style={{fontSize:18}}>{e}</span>) :
+                onClick={()=>{if(treeIcons.length>20) setShowForest(true);}}>
+                {treeIcons.length>0 ? treeIcons.map((tid,i)=><MiniTree key={i} treeId={tid} size={18} />) :
                   <span style={{fontSize:12,color:"#d8d0c4"}}>还没有种树</span>}
-                {treeEmojis.length>20 && <span style={{fontSize:14,color:"#b0a898",cursor:"pointer",letterSpacing:2}}>···</span>}
+                {treeIcons.length>20 && <span style={{fontSize:14,color:"#b0a898",cursor:"pointer",letterSpacing:2}}>···</span>}
               </div>
             </div>
 
@@ -331,7 +340,9 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
                 onClick={()=>setShowForest(false)}>
                 <div onClick={e=>e.stopPropagation()}>
                   <PixelCloud width={300}>
-                    <div style={{fontSize:14,fontWeight:600,color:"#3a3530",fontFamily:F,marginBottom:4}}>🌿 {treeCount}</div>
+                    <div style={{fontSize:14,fontWeight:600,color:"#3a3530",fontFamily:F,marginBottom:4,display:"flex",alignItems:"center",justifyContent:"center",gap:5}}>
+                      <MiniTree treeId={userAvatar} size={18} />{treeCount}
+                    </div>
                     <div style={{fontSize:11,color:"#b0a898",fontFamily:F,marginBottom:12}}>
                       {statsPeriod==="day"?"今日":""}
                       {statsPeriod==="week"?"本周":""}
@@ -340,7 +351,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
                       种下的树
                     </div>
                     <div style={{display:"flex",flexWrap:"wrap",gap:4,justifyContent:"center",maxHeight:240,overflowY:"auto"}}>
-                      {treeEmojis.map((e,i)=><span key={i} style={{fontSize:20}}>{e}</span>)}
+                      {treeIcons.map((tid,i)=><MiniTree key={i} treeId={tid} size={20} />)}
                     </div>
                     <button onClick={()=>setShowForest(false)}
                       style={{marginTop:12,padding:"6px 0",width:"80%",borderRadius:8,background:"#3a3530",color:"#faf6ee",fontSize:12,fontFamily:F,border:"none",cursor:"pointer"}}>关闭</button>

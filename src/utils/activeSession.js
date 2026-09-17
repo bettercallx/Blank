@@ -1,3 +1,4 @@
+
 // Persists the *running* focus session so it survives a full page kill (e.g. iOS
 // Safari discarding a backgrounded tab). Only the session "recipe" is stored — the
 // elapsed time is always recomputed from `startTime`, never counted.

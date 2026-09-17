@@ -1,10 +1,6 @@
 import { useState, useCallback, useMemo } from "react";
 import { createSampleRecords } from "../data/sampleData";
 
-// Demo mode: `true` shows the sample data only (for screenshots) and does NOT touch
-// your saved data; `false` = your real data only. Flip back to `false` when done.
-const USE_SAMPLE_DATA = false;
-
 const STORAGE_KEY = "blank_records";
 
 function loadUserRecords() {
@@ -25,15 +21,17 @@ function persist(records) {
 }
 
 export function useHistory() {
-  // Demo/sample data is regenerated fresh on each load and never persisted,
-  // so screenshots stay "today-relative". Only real sessions are saved.
-  const [sampleRecords] = useState(() => USE_SAMPLE_DATA ? createSampleRecords() : []);
+  // Demo mode: temporarily show curated sample data so new users can preview a
+  // populated dashboard (also handy for screenshots). It's regenerated fresh on load,
+  // never persisted, and never touches real data — flipping `demo` only swaps the view.
+  const [demo, setDemo] = useState(false);
+  const [sampleRecords] = useState(() => createSampleRecords());
   const [userRecords, setUserRecords] = useState(loadUserRecords);
 
   const addRecord = useCallback((r) => {
     setUserRecords(prev => {
       const next = [...prev, { ...r, id: Date.now(), date: new Date() }];
-      if(!USE_SAMPLE_DATA) persist(next); // don't write real storage while demoing
+      persist(next); // real sessions always save, regardless of demo view
       return next;
     });
   }, []);
@@ -41,16 +39,16 @@ export function useHistory() {
   const importRecords = useCallback((recs) => {
     setUserRecords(prev => {
       const next = [...prev, ...recs];
-      if(!USE_SAMPLE_DATA) persist(next);
+      persist(next);
       return next;
     });
   }, []);
 
-  // Demo mode shows sample data only; otherwise real (saved) data only.
+  // Demo shows sample data only; otherwise real (saved) data only.
   const records = useMemo(
-    () => USE_SAMPLE_DATA ? sampleRecords : userRecords,
-    [sampleRecords, userRecords]
+    () => demo ? sampleRecords : userRecords,
+    [demo, sampleRecords, userRecords]
   );
 
-  return { records, addRecord, importRecords };
+  return { records, addRecord, importRecords, demo, setDemo };
 }
