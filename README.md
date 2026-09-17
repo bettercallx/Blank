@@ -1,27 +1,37 @@
+**English** | [简体中文](README.zh-CN.md)
+
 # Blank
 
 a focus app in cute pixel art
 
 React + Vite + SVG pixel art
 
+## License notice
+
+This project is **dual-licensed**:
+
+- **Code** → [Apache 2.0](LICENSE). Open source — fork, modify, and reuse freely.
+- **Pixel art, name & icon** → [All Rights Reserved](ASSETS-LICENSE). **Not** open source.
+
+You may **not** publish this app, or any app reusing its pixel art / name / icon,
+to any app store (Apple App Store, Google Play, etc.). See [`ASSETS-LICENSE`](ASSETS-LICENSE).
+
 ## Contribution
 
-欢迎提 Issue 和 PR！
+Issues and PRs welcome!
 
-- Bug 反馈 → 开 Issue
-- 想要新树种 → 开 Issue 附参考图/提 PR
-- 代码贡献 → Fork → 提 PR
+- Bug reports → open an Issue
+- Want a new tree species → open an Issue with a reference image, or send a PR
+- Code contributions → Fork → open a PR
 
-## local and github pages
+## Local & GitHub Pages
 
 ```bash
 npm install
 npm run dev
 ```
 
-## iPhone 使用
-
-Safari 打开链接 `https://bettercallx.github.io/Blank/` → 分享 → 添加到主屏幕
+## iPhone usage
 
 Safari open link `https://bettercallx.github.io/Blank/` → share → Add to Home Screen
 

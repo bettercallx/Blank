@@ -1,0 +1,59 @@
+Blank — Art & Brand License (All Rights Reserved)
+Copyright (c) 2026 Blank (github.com/bettercallx). All rights reserved.
+
+--------------------------------------------------------------------------------
+IMPORTANT: This project uses TWO licenses.
+
+  • CODE      — licensed under Apache License 2.0 (see the LICENSE file).
+  • ART/BRAND — licensed under THIS file. NOT open source. All rights reserved.
+--------------------------------------------------------------------------------
+
+1. WHAT THIS LICENSE COVERS ("the Protected Assets")
+
+   This license governs the original artistic and brand elements of Blank,
+   regardless of the file format they happen to be stored in:
+
+   (a) The pixel-art designs — i.e. the visual appearance, shapes, and layouts
+       of the trees, plants, clouds, and any other pixel artwork — as expressed
+       in (but not limited to):
+         - src/components/treePixels.jsx   (the pixel-drawing designs)
+         - src/components/PixelCloud.jsx   (the cloud artwork)
+         - src/components/TreeRing.jsx     (ring artwork)
+         - the color palettes in the `TC` object of src/data/trees.js
+
+   (b) The name "Blank", its logo, app icon, and any associated branding.
+
+   Note: the pixel art is expressed as code, but this license protects the
+   ARTISTIC EXPRESSION (how the art looks), not the general programming
+   techniques. The surrounding program logic remains under Apache 2.0.
+
+2. WHAT YOU MAY DO
+
+   • View, run, and modify the Protected Assets locally for personal,
+     non-commercial experimentation and for contributing back to THIS project
+     via Pull Request.
+   • Contributions you submit are licensed back to the project under this same
+     license.
+
+3. WHAT YOU MAY NOT DO WITHOUT WRITTEN PERMISSION
+
+   • Publish, submit, or distribute the Protected Assets — or any app, product,
+     or service that reuses them — to ANY app store (including the Apple App
+     Store and Google Play), website, or storefront.
+   • Use the name "Blank", the logo, or the app icon for your own app or product,
+     or in any way that suggests affiliation or endorsement.
+   • Sell, sublicense, or redistribute the Protected Assets, whether modified or
+     not, on a standalone basis or bundled with other software.
+
+4. RELATIONSHIP TO THE CODE LICENSE
+
+   The Apache 2.0 grant in the LICENSE file applies ONLY to the program code.
+   It does NOT grant any rights to the Protected Assets described above. Where
+   the two licenses appear to overlap (e.g. inside treePixels.jsx), the artistic
+   expression is governed by THIS license and the surrounding code by Apache 2.0.
+
+5. NO WARRANTY
+
+   The Protected Assets are provided "AS IS", without warranty of any kind.
+
+For permission requests: open an issue at github.com/bettercallx/Blank
