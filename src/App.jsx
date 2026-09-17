@@ -34,6 +34,11 @@ export default function App() {
   const {records,addRecord,importRecords} = useHistory();
 
   const isStopwatch = duration === 0;
+  // Cap the open-ended stopwatch so a forgotten session can't record an absurd
+  // duration. 4h is beyond any realistic single focus sitting (research puts a day's
+  // sustainable deep work around ~4h total), so it only ever catches runaways — it
+  // freezes the counter, never interrupts. Change this one constant to tune (3.5h/5h).
+  const STOPWATCH_MAX_SEC = 4 * 60 * 60;
 
   const startFocus = () => {
     startTimeRef.current = Date.now();
@@ -77,7 +82,7 @@ export default function App() {
     const tick = () => {
       const elapsed = Math.floor((Date.now() - startTimeRef.current) / 1000);
       if(totalTime===0) {
-        setTimeLeft(elapsed); // stopwatch: count up, no auto-end
+        setTimeLeft(Math.min(elapsed, STOPWATCH_MAX_SEC)); // stopwatch: count up, frozen at cap
       } else {
         const remaining = totalTime - elapsed;
         if(remaining<=0){ setTimeLeft(0); finishFocus(); }
@@ -131,7 +136,7 @@ export default function App() {
     } else {
       // still running → resume where it left off
       completedRef.current = false;
-      setTimeLeft(total>0 ? total-elapsed : elapsed);
+      setTimeLeft(total>0 ? total-elapsed : Math.min(elapsed, STOPWATCH_MAX_SEC));
       setScreen("focus");
     }
   },[]); // once on mount
