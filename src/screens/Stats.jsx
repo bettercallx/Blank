@@ -60,30 +60,19 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
     e.target.value = "";
   };
 
-  const exportCSV = () => {
-    // quote fields that contain commas, quotes, or newlines
-    const esc = (v) => {
-      const s = String(v);
-      return /[",\n]/.test(s) ? `"${s.replace(/"/g,'""')}"` : s;
-    };
-    const header = ["开始时间","标签","树种","时长(分钟)","完成"];
-    const rows = records
-      .slice()
-      .sort((a,b)=>a.date-b.date)
-      .map(r => [
-        r.date.toISOString(),
-        tags.find(t=>t.id===r.tag)?.label || r.tag,
-        TREES.find(t=>t.id===r.tree)?.name || r.tree,
-        r.duration,
-        r.completed ? "是" : "否",
-      ].map(esc).join(","));
-    const csv = [header.join(","), ...rows].join("\n");
-    // ﻿ BOM so Excel opens UTF-8 Chinese correctly
-    const blob = new Blob(["﻿"+csv], {type:"text/csv;charset=utf-8"});
+  // Full backup for migrating web → app
+  const exportJSON = () => {
+    const data = {};
+    for (let i = 0; i < localStorage.length; i++) {
+      const k = localStorage.key(i);
+      if (k && k.startsWith("blank_")) data[k] = localStorage.getItem(k);
+    }
+    const payload = { app: "blank", exportedAt: new Date().toISOString(), data };
+    const blob = new Blob([JSON.stringify(payload, null, 2)], {type:"application/json"});
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `blank-${new Date().toISOString().slice(0,10)}.csv`;
+    a.download = `blank-backup-${new Date().toISOString().slice(0,10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
   };
@@ -175,10 +164,10 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
                   style={{padding:"8px 0",width:"90%",borderRadius:8,background:"#3a3530",color:"#faf6ee",fontSize:13,fontFamily:F,fontWeight:600,border:"none",cursor:"pointer"}}>保存</button>
 
                 <button onClick={()=>importRef.current?.click()}
-                  style={{marginTop:8,padding:"8px 0",width:"90%",borderRadius:8,background:"transparent",border:"1.5px solid #d8d0c4",color:"#8a8078",fontSize:12,fontFamily:F,cursor:"pointer"}}>📂 导入 Forest 数据</button>
+                  style={{marginTop:8,padding:"8px 0",width:"90%",borderRadius:8,background:"transparent",border:"1.5px solid #d8d0c4",color:"#8a8078",fontSize:12,fontFamily:F,cursor:"pointer"}}>📂 导入 CSV 数据</button>
                 <input ref={importRef} type="file" accept=".csv" onChange={handleImportCSV} style={{display:"none"}} />
 
-                <button onClick={exportCSV}
+                <button onClick={exportJSON}
                   style={{marginTop:8,padding:"8px 0",width:"90%",borderRadius:8,background:"transparent",border:"1.5px solid #d8d0c4",color:"#8a8078",fontSize:12,fontFamily:F,cursor:"pointer"}}>💾 导出 Blank 数据</button>
 
                 <button onClick={()=>{
