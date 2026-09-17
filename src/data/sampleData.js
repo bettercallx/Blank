@@ -1,32 +1,55 @@
 export function createSampleRecords() {
+  // Anchor past days to local midnight so every session lands on a FIXED, natural
+  // clock time (e.g. 13:00) no matter when the demo is opened — not the old bug of
+  // adding an offset onto Date.now() (which already carries the current time of day).
+  // Today's few sessions are relative to "now" so they always stay in the past.
+  const midnight = new Date(); midnight.setHours(0, 0, 0, 0);
+  const DAY = 86400000;
+  let id = 0;
+  // a fixed-clock session on a past day: (daysAgo, hour, minute, ...)
+  const at = (daysAgo, hour, minute, tag, tree, duration) => ({
+    id: ++id, tag, tree, duration, completed: true,
+    date: new Date(midnight.getTime() - daysAgo * DAY + (hour * 60 + minute) * 60000),
+  });
+  // a session earlier today, `hoursAgo` before now (kept in the past)
+  const ago = (hoursAgo, tag, tree, duration) => ({
+    id: ++id, tag, tree, duration, completed: true,
+    date: new Date(Date.now() - hoursAgo * 3600000),
+  });
+
   return [
-    {id:1,tag:"study",tree:"pine",duration:25,date:new Date(Date.now()-86400000*7+36000000),completed:true},
-    {id:2,tag:"code",tree:"christmas",duration:45,date:new Date(Date.now()-86400000*7+43200000),completed:true},
-    {id:3,tag:"class",tree:"sakura",duration:50,date:new Date(Date.now()-86400000*6+32400000),completed:true},
-    {id:4,tag:"study",tree:"pine",duration:25,date:new Date(Date.now()-86400000*6+39600000),completed:true},
-    {id:5,tag:"read",tree:"cactus",duration:30,date:new Date(Date.now()-86400000*6+50400000),completed:true},
-    {id:6,tag:"work",tree:"maple",duration:60,date:new Date(Date.now()-86400000*5+36000000),completed:true},
-    {id:7,tag:"code",tree:"bamboo",duration:45,date:new Date(Date.now()-86400000*5+46800000),completed:true},
-    {id:8,tag:"create",tree:"sunflower",duration:30,date:new Date(Date.now()-86400000*5+54000000),completed:true},
-    {id:9,tag:"study",tree:"sakura",duration:25,date:new Date(Date.now()-86400000*4+32400000),completed:true},
-    {id:10,tag:"class",tree:"pine",duration:50,date:new Date(Date.now()-86400000*4+39600000),completed:true},
-    {id:11,tag:"code",tree:"christmas",duration:60,date:new Date(Date.now()-86400000*4+50400000),completed:true},
-    {id:12,tag:"read",tree:"fumeshroom",duration:25,date:new Date(Date.now()-86400000*4+57600000),completed:true},
-    {id:13,tag:"work",tree:"palm",duration:45,date:new Date(Date.now()-86400000*3+36000000),completed:true},
-    {id:14,tag:"study",tree:"bamboo",duration:30,date:new Date(Date.now()-86400000*3+43200000),completed:true},
-    {id:15,tag:"create",tree:"cactus",duration:25,date:new Date(Date.now()-86400000*3+54000000),completed:true},
-    {id:16,tag:"study",tree:"pine",duration:25,date:new Date(Date.now()-86400000*2+32400000),completed:true},
-    {id:17,tag:"code",tree:"maple",duration:45,date:new Date(Date.now()-86400000*2+43200000),completed:true},
-    {id:18,tag:"class",tree:"sakura",duration:50,date:new Date(Date.now()-86400000*2+50400000),completed:true},
-    {id:19,tag:"read",tree:"sunflower",duration:30,date:new Date(Date.now()-86400000*2+57600000),completed:true},
-    {id:20,tag:"work",tree:"bamboo",duration:30,date:new Date(Date.now()-86400000+32400000),completed:true},
-    {id:21,tag:"study",tree:"pine",duration:25,date:new Date(Date.now()-86400000+39600000),completed:true},
-    {id:22,tag:"code",tree:"christmas",duration:60,date:new Date(Date.now()-86400000+46800000),completed:true},
-    {id:23,tag:"create",tree:"fumeshroom",duration:25,date:new Date(Date.now()-86400000+54000000),completed:true},
-    {id:24,tag:"read",tree:"cactus",duration:30,date:new Date(Date.now()-86400000+57600000),completed:true},
-    {id:25,tag:"study",tree:"sakura",duration:25,date:new Date(Date.now()-14400000),completed:true},
-    {id:26,tag:"code",tree:"maple",duration:45,date:new Date(Date.now()-10800000),completed:true},
-    {id:27,tag:"class",tree:"pine",duration:50,date:new Date(Date.now()-7200000),completed:true},
-    {id:28,tag:"work",tree:"palm",duration:30,date:new Date(Date.now()-3600000),completed:true},
+    // ── 6 days ago ──
+    at(6,  9, 30, "study",  "pine",       25),
+    at(6, 13,  0, "code",   "christmas",  60),
+    at(6, 15, 30, "read",   "cactus",     30),
+    // ── 5 days ago ──
+    at(5, 10,  0, "class",  "sakura",     50),
+    at(5, 13, 30, "work",   "maple",      45),
+    at(5, 16,  0, "create", "sunflower",  30),
+    at(5, 20,  0, "read",   "bamboo",     25),
+    // ── 4 days ago ──
+    at(4,  9,  0, "study",  "plum",       30),
+    at(4, 13,  0, "code",   "christmas",  60),
+    at(4, 14, 30, "study",  "pine",       25),
+    at(4, 16, 30, "read",   "fumeshroom", 25),
+    // ── 3 days ago ──
+    at(3, 10, 30, "work",   "palm",       45),
+    at(3, 13,  0, "study",  "bamboo",     50),
+    at(3, 15,  0, "create", "cactus",     30),
+    // ── 2 days ago ──
+    at(2,  9, 30, "study",  "pine",       25),
+    at(2, 13,  0, "code",   "maple",      60),
+    at(2, 15, 30, "class",  "sakura",     50),
+    at(2, 20,  0, "read",   "sunflower",  25),
+    // ── yesterday ──
+    at(1, 10,  0, "study",  "plum",       30),
+    at(1, 13,  0, "work",   "bamboo",     45),
+    at(1, 14, 30, "code",   "christmas",  60),
+    at(1, 16, 30, "create", "fumeshroom", 25),
+    // ── today (relative to now, always in the past) ──
+    ago(5,   "study", "sakura", 25),
+    ago(3.5, "code",  "maple",  45),
+    ago(2,   "class", "pine",   50),
+    ago(1,   "work",  "palm",   30),
   ];
 }
