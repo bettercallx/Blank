@@ -170,7 +170,7 @@ export default function App() {
     <div style={W.wrap}>
       <div style={W.top}>
         <span></span>
-        <button onClick={()=>setScreen("stats")} style={{background:"none",border:"none",fontSize:13,color:"#8a8078",cursor:"pointer",fontFamily:F}}>统计 →</button>
+        <button onClick={()=>setScreen("stats")} style={{background:"none",border:"none",fontSize:14,color:"#3a3530",fontWeight:600,cursor:"pointer",fontFamily:F}}>统计 →</button>
       </div>
 
 

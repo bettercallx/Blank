@@ -127,13 +127,13 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
               <div style={W.val}>{todayMin>=60?<>{Math.floor(todayMin/60)}<span style={W.unit}>小时</span>{todayMin%60>0&&<>{todayMin%60}<span style={W.unit}>分钟</span></>}</>:<>{todayMin}<span style={W.unit}>分钟</span></>}</div>
               <div style={{fontSize:12,color:"#8a8078",marginTop:4}}>{todayRecs.length} 次专注</div>
             </div>
-            <button onClick={()=>{setShowSettings(true);setSettingsName(userName);}}
-              style={{background:"none",border:"none",cursor:"pointer",padding:4,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
+            <button onClick={()=>{ if(demo) return; setShowSettings(true); setSettingsName(userName); }}
+              style={{background:"none",border:"none",cursor:demo?"default":"pointer",padding:4,display:"flex",flexDirection:"column",alignItems:"center",gap:3}}>
               <svg width={48} height={48} viewBox="0 0 48 48" style={{imageRendering:"pixelated"}}>
                 {treePixels(userAvatar, 3, 3)}
               </svg>
               <span style={{fontSize:12,color:"#8a8078",fontFamily:F}}>{userName||"guest"}</span>
-              <span style={{fontSize:9,color:"#c4baa8",fontFamily:F}}>setting</span>
+              {!demo && <span style={{fontSize:9,color:"#c4baa8",fontFamily:F}}>setting</span>}
             </button>
           </div>
         </div>
