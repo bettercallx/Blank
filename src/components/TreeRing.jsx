@@ -10,10 +10,12 @@ export function TreeRing({ treeId, stage, duration, onDurationChange, ringSize, 
   const prevDeg = useRef(null);
   const rawValue = useRef(duration);
   const [dragActive, setDragActive] = useState(false);
+  const [dragRaw, setDragRaw] = useState(null); // continuous value while dragging
   const [numBounce, setNumBounce] = useState(false);
   const prevDuration = useRef(duration);
 
-  useEffect(() => { rawValue.current = duration; }, [duration]);
+  // don't clobber the continuous drag value when duration snaps mid-drag
+  useEffect(() => { if (!dragging.current) rawValue.current = duration; }, [duration]);
 
   // bounce when snapped value changes
   useEffect(() => {
@@ -32,11 +34,13 @@ export function TreeRing({ treeId, stage, duration, onDurationChange, ringSize, 
   const treeSize = treePx * 16;
   const treeOff = cx - treeSize/2;
 
-  // handle snaps to 5-min grid (every 30°)
-  const lapMin = duration === 0 ? 0 : (duration % 60 || 60);
+  // while dragging, handle/arc follow the finger continuously (dragRaw);
+  // when idle they use the snapped duration. Committed value still snaps to 5-min.
+  const shown = (dragActive && dragRaw !== null) ? dragRaw : duration;
+  const lapMin = shown === 0 ? 0 : (shown % 60 || 60);
   const arcAngle = (lapMin / 60) * 360;
-  const isSecondLap = duration > 60;
-  const isFullCircle = duration === 60 || duration === 120;
+  const isSecondLap = shown > 60;
+  const isFullCircle = arcAngle >= 359.9;
 
   const handleRad = ((arcAngle - 90) * Math.PI) / 180;
   const hx = cx + rOuter * Math.cos(handleRad);
@@ -76,6 +80,7 @@ export function TreeRing({ treeId, stage, duration, onDurationChange, ringSize, 
 
     const minDelta = (delta / 360) * 60;
     rawValue.current = Math.max(0, Math.min(120, rawValue.current + minDelta));
+    setDragRaw(rawValue.current); // handle/arc track the finger smoothly
     const snapped = Math.max(0, Math.min(120, Math.round(rawValue.current / 5) * 5));
     onDurationChange(snapped);
   };
@@ -86,6 +91,7 @@ export function TreeRing({ treeId, stage, duration, onDurationChange, ringSize, 
     setDragActive(true);
     prevDeg.current = null;
     rawValue.current = duration;
+    setDragRaw(duration);
     e.target.setPointerCapture(e.pointerId);
   };
   const onPM = (e) => { if (dragging.current) handleDrag(e.clientX, e.clientY); };
@@ -93,6 +99,7 @@ export function TreeRing({ treeId, stage, duration, onDurationChange, ringSize, 
     dragging.current = false;
     justDragged.current = true;
     setDragActive(false);
+    setDragRaw(null); // settle onto the snapped duration
     prevDeg.current = null;
     setTimeout(() => { justDragged.current = false; }, 50);
   };
@@ -172,13 +179,17 @@ export function TreeRing({ treeId, stage, duration, onDurationChange, ringSize, 
         {isFullCircle &&
           <circle cx={cx} cy={cy} r={rOuter} fill="none" stroke="#3a3530" strokeWidth={8} />}
 
-        {/* handle — snaps to grid, grows on drag */}
-        <circle cx={hx} cy={hy} r={handleR} fill="#3a3530" stroke="#faf6ee" strokeWidth={2.5}
-          style={{ cursor: "grab", transition: "r 0.12s ease-out" }}
+        {/* large transparent touch target — easy to grab on mobile (~48px) */}
+        <circle cx={hx} cy={hy} r={24} fill="transparent"
+          style={{ cursor: "grab" }}
           onPointerDown={onPD} onPointerMove={onPM} onPointerUp={onPU} />
+        {/* visible handle — snaps to grid, grows on drag */}
+        <circle cx={hx} cy={hy} r={handleR} fill="#3a3530" stroke="#faf6ee" strokeWidth={2.5}
+          style={{ pointerEvents: "none", transition: "r 0.12s ease-out" }} />
         {/* second lap indicator ring on handle */}
         {isSecondLap &&
-          <circle cx={hx} cy={hy} r={handleR - 4} fill="none" stroke="#faf6ee" strokeWidth={1.5} />}
+          <circle cx={hx} cy={hy} r={handleR - 4} fill="none" stroke="#faf6ee" strokeWidth={1.5}
+            style={{ pointerEvents: "none" }} />}
       </>}
 
       {/* ---- focus mode: arc with lap 2 support ---- */}
