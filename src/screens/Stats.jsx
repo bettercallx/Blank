@@ -116,7 +116,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
       </div>
       {demo && (
         <div style={{background:"#eef6ef",color:"#4a9e5c",fontSize:12,fontFamily:F,display:"flex",alignItems:"center",justifyContent:"center",gap:5,padding:"7px 12px"}}>
-          <MiniTree treeId={userAvatar} size={15} />示例数据预览 · 仅供参考,不会保存到你的记录
+          <MiniTree treeId={userAvatar} size={15} />示例数据预览 仅供参考,不会保存到你的记录
         </div>
       )}
       <div style={{flex:1,padding:"0 20px 32px",overflowY:"auto"}}>
