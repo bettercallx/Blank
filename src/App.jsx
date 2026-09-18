@@ -11,12 +11,27 @@ import { TreeRing } from "./components/TreeRing";
 import Stats from "./screens/Stats";
 
 
+// Order tags most-recently-active first (newest additions and last-used bubble up),
+// but keep the protected "uncategorized" tag pinned at the very end. Preserves object
+// identity so callers can skip a state update when nothing actually moved. Array.sort
+// is stable, so tags with an equal activeAt keep their current relative order.
+const sortTags = (arr) => {
+  const rest = arr.filter(t => t.id !== "uncategorized");
+  const pinned = arr.filter(t => t.id === "uncategorized");
+  rest.sort((a, b) => (b.activeAt ?? 0) - (a.activeAt ?? 0));
+  return [...rest, ...pinned];
+};
+
 // ======= MAIN =======
 export default function App() {
   const [screen,setScreen] = useState("home");
   const [selTree,setSelTree] = useState(0);
-  const [selTag,setSelTag] = useState(0);
+  const [selTagId,setSelTagId] = useState(null); // track selection by id, not index, so reordering can't point it at the wrong tag
   const [tags,setTags] = useLocalState("blank_tags", DEFAULT_TAGS);
+  // Resolved current selection: falls back to the first tag when nothing is picked yet
+  // or the selected tag was deleted.
+  const selectedTag = tags.find(t=>t.id===selTagId) ?? tags[0];
+  const selId = selectedTag?.id;
   const [addingTag,setAddingTag] = useState(false);
   const [newTagName,setNewTagName] = useState("");
   const [renamingTag,setRenamingTag] = useState(-1);
@@ -43,6 +58,9 @@ export default function App() {
   const startFocus = () => {
     startTimeRef.current = Date.now();
     completedRef.current = false;
+    // starting a focus counts as "using" this tag → refresh its activeAt (the reorder
+    // itself is deferred until we return to home, so the tag row doesn't jump under us)
+    setTags(prev=>prev.map(t=>t.id===selId?{...t,activeAt:Date.now()}:t));
     if(isStopwatch) {
       setTimeLeft(0); setTotalTime(0); // stopwatch: count up from 0
     } else {
@@ -50,7 +68,7 @@ export default function App() {
     }
     setTreeStage(0); setScreen("focus");
     // persist the running session so it survives a full page kill
-    saveActiveSession({ startTime: startTimeRef.current, duration, tag: tags[selTag].id, tree: TREES[selTree].id });
+    saveActiveSession({ startTime: startTimeRef.current, duration, tag: selId, tree: TREES[selTree].id });
   };
 
   // completing a countdown: plant the tree, record, and show the done screen
@@ -59,21 +77,20 @@ export default function App() {
     completedRef.current = true;
     clearActiveSession();
     setTreeStage(3);
-    addRecord({tag:tags[selTag].id,tree:TREES[selTree].id,duration,completed:true});
-    bumpTag(selTag);
+    addRecord({tag:selId,tree:TREES[selTree].id,duration,completed:true});
     setScreen("done");
   };
 
-  const bumpTag = (idx) => {
-    if(idx <= 0) return; // already first
-    setTags(prev => {
-      const t = [...prev];
-      const [used] = t.splice(idx, 1);
-      t.unshift(used);
-      return t;
+  // Deferred reorder: re-sort the tag row only when we (re)enter home — never while
+  // the user is looking at it — so a tag can't jump away the moment it's used. Runs on
+  // mount too (initial screen is "home"). No-ops when nothing moved to avoid extra renders.
+  useEffect(()=>{
+    if(screen!=="home") return;
+    setTags(prev=>{
+      const sorted = sortTags(prev);
+      return sorted.every((t,i)=>t===prev[i]) ? prev : sorted;
     });
-    setSelTag(0);
-  };
+  },[screen]);
 
   useEffect(()=>{
     if(screen!=="focus") return;
@@ -114,14 +131,12 @@ export default function App() {
     const s = loadActiveSession();
     if(!s) return;
     const treeIdx = Math.max(0, TREES.findIndex(t=>t.id===s.tree));
-    const tagIdx = tags.findIndex(t=>t.id===s.tag);
-    const safeTagIdx = tagIdx>=0 ? tagIdx : Math.max(0, tags.findIndex(t=>t.id==="uncategorized"));
     const total = s.duration*60; // 0 for stopwatch
     const elapsed = Math.floor((Date.now()-s.startTime)/1000);
 
     startTimeRef.current = s.startTime;
     setSelTree(treeIdx);
-    setSelTag(safeTagIdx);
+    setSelTagId(tags.some(t=>t.id===s.tag) ? s.tag : "uncategorized");
     setDuration(s.duration);
     setTotalTime(total);
 
@@ -148,14 +163,13 @@ export default function App() {
       // stopwatch: record elapsed time — but skip empty (0-min) sessions
       const elapsedMin = Math.floor(timeLeft/60);
       if(elapsedMin>0) {
-        addRecord({tag:tags[selTag].id,tree:TREES[selTree].id,duration:elapsedMin,completed:true});
-        bumpTag(selTag);
+        addRecord({tag:selId,tree:TREES[selTree].id,duration:elapsedMin,completed:true});
         setScreen("done");
       } else {
         setScreen("home");
       }
     } else {
-      addRecord({tag:tags[selTag].id,tree:TREES[selTree].id,duration,completed:false});
+      addRecord({tag:selId,tree:TREES[selTree].id,duration,completed:false});
       setScreen("home");
     }
   };
@@ -253,11 +267,11 @@ export default function App() {
               return (
                 <div key={t.id} style={{position:"relative",flexShrink:0}}>
                   <button
-                    onClick={(e)=>{ e.stopPropagation(); if(!deleteMode) setSelTag(i); }}
+                    onClick={(e)=>{ e.stopPropagation(); if(!deleteMode) setSelTagId(t.id); }}
                     onPointerDown={(e)=>{ if(!deleteMode && !isProtected) pressTimer=setTimeout(()=>{setRenamingTag(i);setRenameText(t.label);},500); }}
                     onPointerUp={()=>clearTimeout(pressTimer)}
                     onPointerLeave={()=>clearTimeout(pressTimer)}
-                    style={{...W.tag(i===selTag && !deleteMode), animation: deleteMode && !isProtected ? "wobble 0.3s infinite alternate" : "none"}}
+                    style={{...W.tag(t.id===selId && !deleteMode), animation: deleteMode && !isProtected ? "wobble 0.3s infinite alternate" : "none"}}
                   >{t.label}</button>
                   {deleteMode && !isProtected && tags.length > 1 && (
                     <button
@@ -282,7 +296,7 @@ export default function App() {
               onChange={e=>setNewTagName(e.target.value)}
               onKeyDown={e=>{
                 if(e.key==="Enter"){
-                  if(newTagName.trim()) setTags(prev=>[...prev,{id:`custom_${Date.now()}`,label:newTagName.trim().slice(0,16)}]);
+                  if(newTagName.trim()){ const nt={id:`custom_${Date.now()}`,label:newTagName.trim().slice(0,16),activeAt:Date.now()}; setTags(prev=>[nt,...prev]); setSelTagId(nt.id); }
                   setNewTagName("");setAddingTag(false);
                 }
                 if(e.key==="Escape"){setNewTagName("");setAddingTag(false);}
@@ -325,8 +339,9 @@ export default function App() {
                   style={{flex:1,padding:"8px 0",borderRadius:8,background:"transparent",border:"1.5px solid #d8d0c4",color:"#8a8078",fontSize:12,fontFamily:F,cursor:"pointer"}}>取消</button>
                 <button onClick={()=>{
                   const idx = confirmDelete.index;
+                  const removedId = tags[idx]?.id;
                   setTags(prev=>prev.filter((_,j)=>j!==idx));
-                  if(selTag>=idx && selTag>0) setSelTag(selTag-1);
+                  if(removedId===selId) setSelTagId(null); // selection resolves back to the first tag
                   setDeleteMode(false);
                   setConfirmDelete(null);
                 }}
@@ -344,7 +359,7 @@ export default function App() {
     const isStopwatchMode = totalTime === 0;
     return (
       <div style={{...W.wrap,alignItems:"center",justifyContent:"center"}}>
-        <div style={{position:"absolute",top:16,right:20,fontSize:11,color:"#b0a898"}}>{tags[selTag].label}</div>
+        <div style={{position:"absolute",top:16,right:20,fontSize:11,color:"#b0a898"}}>{selectedTag?.label}</div>
         <TreeRing treeId={TREES[selTree].id} stage={treeStage} duration={duration}
           onDurationChange={()=>{}} ringSize={ringSize}
           isFocus={fmt(isStopwatchMode ? timeLeft : timeLeft)}
@@ -366,7 +381,7 @@ export default function App() {
         onDurationChange={()=>{}} ringSize={ringSize} isFocus={`${elapsedMin} 分钟`}
         timeLeft={totalTime===0?timeLeft:0} totalTime={totalTime} stopwatch={totalTime===0} focusLabel="" />
       <div style={{fontSize:15,fontWeight:500,marginTop:8}}>种好了 🎉</div>
-      <div style={{fontSize:13,color:"#8a8078",marginTop:4}}>{tags[selTag].label}</div>
+      <div style={{fontSize:13,color:"#8a8078",marginTop:4}}>{selectedTag?.label}</div>
       <div style={{padding:"24px 40px 28px",width:"100%",boxSizing:"border-box"}}>
         <button onClick={()=>setScreen("home")} style={W.btn("#3a3530","#faf6ee")}>回到主页</button>
       </div>

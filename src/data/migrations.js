@@ -7,15 +7,32 @@
 // Keys currently in use: blank_records, blank_tags, blank_userName, blank_userAvatar
 
 const VERSION_KEY = "blank_version";
-const CURRENT_VERSION = 1;
+const CURRENT_VERSION = 2;
 
 const migrations = {
   // Baseline. Existing data is already this shape, so nothing to transform —
   // this step just stamps unversioned data as v1.
   1: () => {},
 
+  // Add `activeAt` (a "last active" timestamp) to every stored tag so tags can be
+  // auto-sorted most-recent-first. We backfill descending by current index so the
+  // user's existing arrangement is preserved on first load (index 0 = newest);
+  // from then on new tags and starting a focus refresh their own activeAt.
+  2: () => {
+    const raw = localStorage.getItem("blank_tags");
+    if (!raw) return; // fresh install → DEFAULT_TAGS handles it
+    let tags;
+    try { tags = JSON.parse(raw); } catch { return; }
+    if (!Array.isArray(tags)) return;
+    const base = Date.now();
+    const migrated = tags.map((t, i) =>
+      typeof t.activeAt === "number" ? t : { ...t, activeAt: base - i }
+    );
+    localStorage.setItem("blank_tags", JSON.stringify(migrated));
+  },
+
   // ---- Add future migrations below. Example (rename records' `duration` → `minutes`):
-  // 2: () => {
+  // 3: () => {
   //   const recs = JSON.parse(localStorage.getItem("blank_records") || "[]");
   //   const migrated = recs.map(({ duration, ...r }) => ({ ...r, minutes: duration }));
   //   localStorage.setItem("blank_records", JSON.stringify(migrated));
