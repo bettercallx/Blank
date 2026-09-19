@@ -47,14 +47,28 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
         additions.push({ id, label: name });
       });
 
-      const resolved = imported.map(({ tagName, ...r }) => ({
-        ...r,
-        tag: tagName ? idByLabel.get(tagName) : "uncategorized",
-      }));
+      // Natural key = start time + duration + tree. Forest exports are stable, so
+      // re-importing the same file (or overlapping exports) is idempotent: rows that
+      // already exist are skipped instead of appended, so stats never double-count.
+      const keyOf = r => `${r.date.getTime()}_${r.duration}_${r.tree}`;
+      const seen = new Set(records.map(keyOf));
+      const base = Date.now(); // unique id base so separate imports never collide
+      const resolved = [];
+      imported.forEach(({ tagName, ...r }) => {
+        const key = keyOf(r);
+        if(seen.has(key)) return; // already imported → skip
+        seen.add(key);
+        resolved.push({ ...r, id: base + resolved.length, tag: tagName ? idByLabel.get(tagName) : "uncategorized" });
+      });
 
-      if(additions.length) setTags(prev => [...prev, ...additions]);
+      // Only create tags that are actually referenced by the rows we're keeping.
+      const keptTagIds = new Set(resolved.map(r => r.tag));
+      const keptAdditions = additions.filter(a => keptTagIds.has(a.id));
+
+      const skipped = imported.length - resolved.length;
+      if(keptAdditions.length) setTags(prev => [...prev, ...keptAdditions]);
       importRecords(resolved);
-      alert(`导入成功！${resolved.length} 条记录，${additions.length} 个新标签`);
+      alert(`导入成功！新增 ${resolved.length} 条记录，${keptAdditions.length} 个新标签${skipped ? `，跳过 ${skipped} 条重复` : ""}`);
     };
     reader.readAsText(file);
     e.target.value = "";
