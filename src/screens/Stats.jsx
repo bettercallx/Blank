@@ -269,23 +269,31 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
             if(statsPeriod==="day") {
               const yd = new Date(now); yd.setDate(yd.getDate()-1);
               prevFiltered = prevFiltered.filter(r=>r.date.toDateString()===yd.toDateString());
-            } else if(statsPeriod==="week") {
-              const start=new Date(now);start.setDate(start.getDate()-start.getDay()-7);
-              const end=new Date(start);end.setDate(end.getDate()+7);
-              prevFiltered = prevFiltered.filter(r=>r.date>=start&&r.date<end);
-            } else if(statsPeriod==="month") {
-              const pm=now.getMonth()===0?11:now.getMonth()-1;
-              const py=now.getMonth()===0?now.getFullYear()-1:now.getFullYear();
-              prevFiltered = prevFiltered.filter(r=>r.date.getMonth()===pm&&r.date.getFullYear()===py);
             } else {
-              prevFiltered = prevFiltered.filter(r=>r.date.getFullYear()===now.getFullYear()-1);
+              // Compare against the SAME point in the previous period, not the whole
+              // previous period — otherwise the elapsed-to-date current period is
+              // unfairly measured against a full week/month/year (always negative early on).
+              let curStart, prevStart;
+              if(statsPeriod==="week") {
+                curStart = weekStart(now);
+                prevStart = new Date(curStart); prevStart.setDate(prevStart.getDate()-7);
+              } else if(statsPeriod==="month") {
+                curStart = new Date(now.getFullYear(), now.getMonth(), 1);
+                prevStart = new Date(now.getFullYear(), now.getMonth()-1, 1);
+              } else {
+                curStart = new Date(now.getFullYear(), 0, 1);
+                prevStart = new Date(now.getFullYear()-1, 0, 1);
+              }
+              const elapsed = now.getTime() - curStart.getTime(); // ms into current period
+              const prevEnd = new Date(prevStart.getTime() + elapsed);
+              prevFiltered = prevFiltered.filter(r=>r.date>=prevStart && r.date<prevEnd);
             }
             const prevMin = prevFiltered.reduce((s,r)=>s+r.duration,0);
             trendMin = totalMin - prevMin;
           }
 
           const fmtTrend = (m) => fmtDuration(Math.abs(m));
-          const trendLabel = statsPeriod==="day"?"较昨日":statsPeriod==="week"?"较上周":statsPeriod==="month"?"较上月":"较去年";
+          const trendLabel = statsPeriod==="day"?"较昨日":statsPeriod==="week"?"较上周今天":statsPeriod==="month"?"较上月今天":"较去年今天";
 
           // block 2: hourly histogram (day view) or daily bars (week/month/year)
           let barData = [];
