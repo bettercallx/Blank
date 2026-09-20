@@ -242,7 +242,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
           const sd = statsDate;
           let filtered = records.filter(r=>r.completed);
           if(statsPeriod==="day") filtered=filtered.filter(r=>r.date.toDateString()===sd.toDateString());
-          else if(statsPeriod==="week"){ const start=new Date(sd);start.setDate(start.getDate()-start.getDay());const end=new Date(start);end.setDate(end.getDate()+7); filtered=filtered.filter(r=>r.date>=start&&r.date<end); }
+          else if(statsPeriod==="week"){ const start=weekStart(sd);const end=new Date(start);end.setDate(end.getDate()+7); filtered=filtered.filter(r=>r.date>=start&&r.date<end); }
           else if(statsPeriod==="month") filtered=filtered.filter(r=>r.date.getMonth()===sd.getMonth()&&r.date.getFullYear()===sd.getFullYear());
           else filtered=filtered.filter(r=>r.date.getFullYear()===sd.getFullYear());
 
