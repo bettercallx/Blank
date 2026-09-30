@@ -216,13 +216,13 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
             const d=new Date(statsDate);
             if(statsPeriod==="day") d.setDate(d.getDate()-1);
             else if(statsPeriod==="week") d.setDate(d.getDate()-7);
-            else if(statsPeriod==="month") d.setMonth(d.getMonth()-1);
+            else if(statsPeriod==="month"){ const dd=d.getDate(); d.setDate(1); d.setMonth(d.getMonth()-1); d.setDate(Math.min(dd,new Date(d.getFullYear(),d.getMonth()+1,0).getDate())); }
             else d.setFullYear(d.getFullYear()-1);
             setStatsDate(d);
           }} style={{background:"none",border:"none",fontSize:16,color:atBackLimit?"#e8e0d6":"#c4a882",cursor:"pointer"}}>‹</button>
           <span style={{fontSize:13,color:"#3a3530",fontFamily:F,minWidth:140,textAlign:"center"}}>
             {statsPeriod==="day" && `${statsDate.getFullYear()}年${statsDate.getMonth()+1}月${statsDate.getDate()}日`}
-            {statsPeriod==="week" && (()=>{ const s=new Date(statsDate);s.setDate(s.getDate()-s.getDay());return `${s.getMonth()+1}月${s.getDate()}日 - ${s.getMonth()+1}月${s.getDate()+6}日`; })()}
+            {statsPeriod==="week" && (()=>{ const s=new Date(statsDate);s.setDate(s.getDate()-s.getDay());const e=new Date(s);e.setDate(e.getDate()+6);return `${s.getMonth()+1}月${s.getDate()}日 - ${e.getMonth()+1}月${e.getDate()}日`; })()}
             {statsPeriod==="month" && `${statsDate.getFullYear()}年${statsDate.getMonth()+1}月`}
             {statsPeriod==="year" && `${statsDate.getFullYear()}年`}
           </span>
@@ -231,7 +231,7 @@ export default function Stats({ records, tags, setTags, importRecords, userName,
             const d=new Date(statsDate);
             if(statsPeriod==="day") d.setDate(d.getDate()+1);
             else if(statsPeriod==="week") d.setDate(d.getDate()+7);
-            else if(statsPeriod==="month") d.setMonth(d.getMonth()+1);
+            else if(statsPeriod==="month"){ const dd=d.getDate(); d.setDate(1); d.setMonth(d.getMonth()+1); d.setDate(Math.min(dd,new Date(d.getFullYear(),d.getMonth()+1,0).getDate())); }
             else d.setFullYear(d.getFullYear()+1);
             setStatsDate(d);
           }} style={{background:"none",border:"none",fontSize:16,color:atFwdLimit?"#e8e0d6":"#c4a882",cursor:"pointer"}}>›</button>
