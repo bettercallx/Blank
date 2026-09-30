@@ -1,13 +1,14 @@
 import { useState, useEffect, useRef } from "react";
 import { TREES } from "./data/trees";
 import { DEFAULT_TAGS } from "./data/tags";
-import { useHistory } from "./hooks/useHistory";
+import { useHistory, splitByDay } from "./hooks/useHistory";
 import { useLocalState } from "./hooks/useLocalState";
 import { fmt, fmtDuration } from "./utils/format";
 import { saveActiveSession, loadActiveSession, clearActiveSession } from "./utils/activeSession";
 import { F, W } from "./styles";
 import PixelCloud from "./components/PixelCloud";
 import { TreeRing } from "./components/TreeRing";
+import MiniTree from "./components/MiniTree";
 import Stats from "./screens/Stats";
 
 
@@ -77,7 +78,7 @@ export default function App() {
     completedRef.current = true;
     clearActiveSession();
     setTreeStage(3);
-    addRecord({tag:selId,tree:TREES[selTree].id,duration,completed:true});
+    addRecord({tag:selId,tree:TREES[selTree].id,duration,completed:true,startTime:startTimeRef.current});
     setScreen("done");
   };
 
@@ -146,7 +147,7 @@ export default function App() {
       clearActiveSession();
       setTimeLeft(0);
       setTreeStage(3);
-      addRecord({tag:s.tag,tree:s.tree,duration:s.duration,completed:true});
+      addRecord({tag:s.tag,tree:s.tree,duration:s.duration,completed:true,startTime:s.startTime});
       setScreen("done");
     } else {
       // still running → resume where it left off
@@ -163,13 +164,13 @@ export default function App() {
       // stopwatch: record elapsed time — but skip empty (0-min) sessions
       const elapsedMin = Math.floor(timeLeft/60);
       if(elapsedMin>0) {
-        addRecord({tag:selId,tree:TREES[selTree].id,duration:elapsedMin,completed:true});
+        addRecord({tag:selId,tree:TREES[selTree].id,duration:elapsedMin,completed:true,startTime:startTimeRef.current});
         setScreen("done");
       } else {
         setScreen("home");
       }
     } else {
-      addRecord({tag:selId,tree:TREES[selTree].id,duration,completed:false});
+      addRecord({tag:selId,tree:TREES[selTree].id,duration,completed:false,startTime:startTimeRef.current});
       setScreen("home");
     }
   };
@@ -375,13 +376,37 @@ export default function App() {
   // ---- DONE ----
   if(screen==="done"){
     const elapsedMin = totalTime===0 ? Math.floor(timeLeft/60) : duration;
+    // A session that ran across midnight is recorded as one tree per day (see splitByDay
+    // in useHistory); mirror that split here so the celebration matches the forest/stats
+    // instead of claiming a single tree that isn't there.
+    const segments = splitByDay(startTimeRef.current, elapsedMin);
+    const crossedMidnight = segments.length > 1;
     return (
     <div style={{...W.wrap,alignItems:"center",justifyContent:"center"}}>
-      <TreeRing treeId={TREES[selTree].id} stage={treeStage} duration={duration}
-        onDurationChange={()=>{}} ringSize={ringSize} isFocus={`${elapsedMin} 分钟`}
-        timeLeft={totalTime===0?timeLeft:0} totalTime={totalTime} stopwatch={totalTime===0} focusLabel="" />
-      <div style={{fontSize:15,fontWeight:500,marginTop:8}}>种好了 🎉</div>
-      <div style={{fontSize:13,color:"#8a8078",marginTop:4}}>{selectedTag?.label}</div>
+      {crossedMidnight ? (
+        <>
+          <div style={{display:"flex",gap:28,alignItems:"flex-end",justifyContent:"center"}}>
+            {segments.map((s,i)=>(
+              <div key={i} style={{display:"flex",flexDirection:"column",alignItems:"center",gap:6}}>
+                <MiniTree treeId={TREES[selTree].id} size={88} />
+                <div style={{fontSize:13,color:"#3a3530",fontFamily:F,fontWeight:600}}>{s.duration} 分钟</div>
+                <div style={{fontSize:11,color:"#b0a898",fontFamily:F}}>{s.date.getMonth()+1}月{s.date.getDate()}日</div>
+              </div>
+            ))}
+          </div>
+          <div style={{fontSize:15,fontWeight:500,marginTop:20}}>种好了 🎉</div>
+          <div style={{fontSize:12,color:"#b0a898",fontFamily:F,marginTop:4}}>跨过午夜，分成了 {segments.length} 天</div>
+          <div style={{fontSize:13,color:"#8a8078",marginTop:4}}>{selectedTag?.label}</div>
+        </>
+      ) : (
+        <>
+          <TreeRing treeId={TREES[selTree].id} stage={treeStage} duration={duration}
+            onDurationChange={()=>{}} ringSize={ringSize} isFocus={`${elapsedMin} 分钟`}
+            timeLeft={totalTime===0?timeLeft:0} totalTime={totalTime} stopwatch={totalTime===0} focusLabel="" />
+          <div style={{fontSize:15,fontWeight:500,marginTop:8}}>种好了 🎉</div>
+          <div style={{fontSize:13,color:"#8a8078",marginTop:4}}>{selectedTag?.label}</div>
+        </>
+      )}
       <div style={{padding:"24px 40px 28px",width:"100%",boxSizing:"border-box"}}>
         <button onClick={()=>setScreen("home")} style={W.btn("#3a3530","#faf6ee")}>回到主页</button>
       </div>
